@@ -1,0 +1,17 @@
+{
+  "name": "rover-cam-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ESP32-CAM cloud relay - one camera upload, many viewers",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}

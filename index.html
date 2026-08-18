@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rover Camera</title>
+<style>
+  :root{
+    --bg:#0a0d10;
+    --panel:#10151a;
+    --panel-2:#161c22;
+    --line:#232b33;
+    --line-soft:#1a2028;
+    --ink:#d6dee6;
+    --ink-dim:#6b7684;
+    --ink-faint:#414a55;
+    --accent:#49b8d1;
+    --accent-dim:#255a67;
+    --green:#4caf6d;
+    --green-dim:#295c3a;
+    --amber:#e0a83e;
+    --amber-dim:#7a5c1f;
+    --red:#e6584c;
+    --red-dim:#7a2e28;
+    --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+    --sans:"Inter","Segoe UI",system-ui,sans-serif;
+    --radius:5px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+  }
+
+  body{
+    min-height:100vh;
+  }
+
+  ::selection{ background:var(--accent-dim); color:#fff; }
+
+  button, input{ font:inherit; color:inherit; }
+
+  :focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+
+  /* ================= layout shell ================= */
+  .app{
+    max-width:1320px;
+    margin:0 auto;
+    padding:16px 18px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  /* ================= top bar ================= */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    padding:12px 16px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .brand-mark{
+    width:30px;height:30px;
+    border:1px solid var(--accent-dim);
+    border-radius:4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:700;
+    color:var(--accent);
+    background:rgba(73,184,209,0.06);
+  }
+  .brand-text h1{
+    margin:0;
+    font-family:var(--mono);
+    font-size:13.5px;
+    font-weight:600;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink);
+  }
+  .brand-text .sub{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.08em;
+    color:var(--ink-dim);
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+
+  .topbar-right{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-dim);
+  }
+  .topbar-right .divider{
+    width:1px;height:16px;
+    background:var(--line);
+  }
+  .topbar-ip{ letter-spacing:.03em; }
+  .topbar-ip b{ color:var(--ink); font-weight:600; }
+  .topbar-clock{ letter-spacing:.05em; min-width:70px; text-align:right; }
+
+  /* ================= status pill ================= */
+  .status-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    padding:5px 10px 5px 8px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+  }
+  .status-pill .dot{
+    width:7px;height:7px;
+    border-radius:50%;
+    background:var(--ink-faint);
+  }
+  .status-pill.idle{ color:var(--ink-dim); }
+  .status-pill.idle .dot{ background:var(--ink-faint); }
+
+  .status-pill.connected, .status-pill.streaming{
+    color:var(--green);
+    border-color:var(--green-dim);
+  }
+  .status-pill.connected .dot, .status-pill.streaming .dot{
+    background:var(--green);
+  }
+  .status-pill.streaming .dot{ animation:blip 1.4s infinite; }
+
+  .status-pill.capture{
+    color:var(--amber);
+    border-color:var(--amber-dim);
+  }
+  .status-pill.capture .dot{ background:var(--amber); animation:blip 0.8s infinite; }
+
+  .status-pill.error, .status-pill.offline{
+    color:var(--red);
+    border-color:var(--red-dim);
+  }
+  .status-pill.error .dot, .status-pill.offline .dot{ background:var(--red); }
+
+  @keyframes blip{
+    0%,100%{ opacity:1; }
+    50%{ opacity:.3; }
+  }
+
+  /* ================= grids ================= */
+  .main-grid{
+    display:grid;
+    grid-template-columns: 1fr 320px;
+    gap:16px;
+    align-items:start;
+  }
+  .bottom-grid{
+    display:grid;
+    grid-template-columns: 1fr 320px;
+    gap:16px;
+    align-items:start;
+  }
+  @media (max-width:900px){
+    .main-grid, .bottom-grid{ grid-template-columns:1fr; }
+  }
+
+  /* ================= panels ================= */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:9px 14px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel-2);
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+  }
+  .panel-body{ padding:14px; }
+  .panel + .panel{ margin-top:14px; }
+
+  /* ================= viewfinder ================= */
+  .viewfinder{
+    position:relative;
+    width:100%;
+    aspect-ratio:4/3;
+    background:#04060a;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .viewfinder img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+  }
+  .stream-slot{
+    width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .vf-empty{
+    font-family:var(--mono);
+    color:var(--ink-dim);
+    font-size:12px;
+    letter-spacing:.06em;
+    text-align:center;
+    line-height:1.8;
+  }
+
+  .corner{
+    position:absolute;
+    width:20px;height:20px;
+    border-color:var(--accent);
+    opacity:.8;
+    pointer-events:none;
+  }
+  .corner.tl{ top:10px; left:10px; border-top:2px solid; border-left:2px solid; }
+  .corner.tr{ top:10px; right:10px; border-top:2px solid; border-right:2px solid; }
+  .corner.bl{ bottom:10px; left:10px; border-bottom:2px solid; border-left:2px solid; }
+  .corner.br{ bottom:10px; right:10px; border-bottom:2px solid; border-right:2px solid; }
+
+  .vf-overlay-top{
+    position:absolute;
+    top:10px; left:38px; right:38px;
+    display:flex;
+    justify-content:flex-end;
+    align-items:flex-start;
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    pointer-events:none;
+  }
+
+  .vf-telemetry{
+    text-align:right;
+    color:var(--ink-dim);
+    line-height:1.6;
+  }
+  .vf-telemetry span{ color:var(--ink); }
+
+  .vf-overlay-bottom{
+    position:absolute;
+    bottom:10px; left:38px; right:38px;
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--mono);
+    font-size:9.5px;
+    letter-spacing:.06em;
+    color:var(--ink-dim);
+    text-transform:uppercase;
+    pointer-events:none;
+  }
+
+  .flash{
+    position:absolute;
+    inset:0;
+    background:#fff;
+    opacity:0;
+    pointer-events:none;
+  }
+  .flash.go{ animation:flashfx .3s ease-out; }
+  @keyframes flashfx{
+    0%{ opacity:.8; }
+    100%{ opacity:0; }
+  }
+
+  /* ================= device / camera panel content ================= */
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    margin-bottom:12px;
+  }
+  .field:last-child{ margin-bottom:0; }
+  .field label{
+    font-family:var(--mono);
+    font-size:9.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+  .field .value{
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink);
+  }
+  .field .value.accent{ color:var(--accent); }
+
+  .stat-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:6px 0;
+    border-bottom:1px solid var(--line-soft);
+    font-family:var(--mono);
+    font-size:11.5px;
+  }
+  .stat-row:last-child{ border-bottom:none; }
+  .stat-row .k{ color:var(--ink-dim); letter-spacing:.06em; text-transform:uppercase; font-size:10px; }
+  .stat-row .v{ color:var(--ink); }
+
+  .toggle-row{ display:flex; gap:8px; margin-top:4px; }
+  .toggle{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    padding:9px 10px;
+    border-radius:4px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--ink-dim);
+    cursor:pointer;
+    transition:border-color .15s, color .15s;
+  }
+  .toggle:hover{ border-color:var(--accent-dim); }
+  .toggle.on{ color:var(--accent); border-color:var(--accent-dim); }
+  .toggle .swatch{ width:7px;height:7px;border-radius:2px; background:var(--line); }
+  .toggle.on .swatch{ background:var(--accent); }
+
+  .action-btn{
+    width:100%;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding:12px 14px;
+    border-radius:4px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--ink);
+    cursor:pointer;
+    transition:border-color .15s, background .15s, color .15s, transform .1s;
+    margin-bottom:8px;
+  }
+  .action-btn:last-child{ margin-bottom:0; }
+  .action-btn:hover{ border-color:var(--accent-dim); color:#fff; }
+  .action-btn:active{ transform:scale(.98); }
+  .action-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .action-btn.stream-active{ border-color:var(--red-dim); color:var(--red); }
+  .action-btn.primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#04141a;
+    font-weight:600;
+  }
+  .action-btn.primary:hover{ background:#63c6dd; border-color:#63c6dd; color:#04141a; }
+
+  /* ================= filmstrip ================= */
+  .filmstrip{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding:2px 2px 4px;
+  }
+  .filmstrip::-webkit-scrollbar{ height:6px; }
+  .filmstrip::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+
+  .frame{
+    flex:0 0 auto;
+    width:128px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .frame img{
+    width:100%;
+    height:92px;
+    object-fit:cover;
+    display:block;
+    cursor:pointer;
+    background:#04060a;
+  }
+  .frame-meta{
+    padding:6px 8px;
+    font-family:var(--mono);
+    font-size:9px;
+    color:var(--ink-dim);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .frame-meta .idx{ color:var(--accent); }
+  .frame-meta a{
+    color:var(--ink-dim);
+    text-decoration:none;
+    letter-spacing:.05em;
+  }
+  .frame-meta a:hover{ color:var(--accent); text-decoration:underline; }
+
+  .empty-strip{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-dim);
+    padding:14px 2px;
+  }
+
+  /* ================= system log ================= */
+  .log-list{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    max-height:200px;
+    overflow-y:auto;
+    font-family:var(--mono);
+    font-size:10.5px;
+  }
+  .log-list::-webkit-scrollbar{ width:6px; }
+  .log-list::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+  .log-row{
+    display:flex;
+    gap:8px;
+    padding:5px 0;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .log-row:last-child{ border-bottom:none; }
+  .log-time{ color:var(--ink-faint); flex:0 0 auto; }
+  .log-msg{ color:var(--ink-dim); }
+  .log-row.ok .log-msg{ color:var(--green); }
+  .log-row.err .log-msg{ color:var(--red); }
+  .log-row.warn .log-msg{ color:var(--amber); }
+
+  /* ================= lightbox ================= */
+  .lightbox{
+    position:fixed;
+    inset:0;
+    background:rgba(4,6,10,0.86);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:30px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .15s;
+    z-index:50;
+  }
+  .lightbox.show{ opacity:1; pointer-events:auto; }
+  .lightbox-inner{
+    max-width:min(900px, 100%);
+    max-height:100%;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .lightbox-inner img{
+    max-width:100%;
+    max-height:70vh;
+    object-fit:contain;
+    display:block;
+    background:#04060a;
+  }
+  .lightbox-meta{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 14px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-dim);
+    border-top:1px solid var(--line);
+  }
+  .lightbox-actions{ display:flex; gap:10px; align-items:center; }
+  .lightbox-actions a, .lightbox-actions button{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    background:none;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:6px 12px;
+    text-decoration:none;
+    cursor:pointer;
+  }
+  .lightbox-actions a:hover, .lightbox-actions button:hover{ color:var(--accent); border-color:var(--accent-dim); }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">CAM</div>
+      <div class="brand-text">
+        <h1>Rover Camera</h1>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill idle" id="statusPill"><span class="dot"></span><span id="statusPillText">Idle</span></div>
+      <div class="divider"></div>
+      <div class="topbar-ip">RELAY <b id="topbarIp">--</b></div>
+      <div class="divider"></div>
+      <div class="topbar-clock" id="clock">--:--:--</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- ================= viewfinder ================= -->
+    <div class="viewfinder" id="viewfinder">
+      <div class="vf-empty" id="vfEmpty">STREAM OFFLINE<br>press &ldquo;start feed&rdquo; to connect</div>
+      <div class="stream-slot" id="streamSlot"></div>
+
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
+      <div class="vf-overlay-top">
+        <div class="vf-telemetry">
+          RES <span id="teleRes">--</span>
+        </div>
+      </div>
+
+      <div class="vf-overlay-bottom">
+        <div id="teleConn">-- </div>
+        <div id="teleTime">--:--:--</div>
+      </div>
+
+      <div class="flash" id="flash"></div>
+    </div>
+
+    <!-- ================= side panel ================= -->
+    <div class="side-col">
+      <div class="panel">
+        <div class="panel-head">Device</div>
+        <div class="panel-body">
+          <div class="field">
+            <label>Relay server</label>
+            <div class="value accent" id="relayHost">--</div>
+          </div>
+          <div class="field">
+            <label>Camera (ESP32)</label>
+            <div class="value" id="deviceConnValue">Not yet checked</div>
+          </div>
+          <div class="field">
+            <label>Connected viewers</label>
+            <div class="value" id="viewerCount">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Camera</div>
+        <div class="panel-body">
+          <div class="stat-row"><span class="k">Resolution</span><span class="v" id="statRes">--</span></div>
+          <div class="toggle-row">
+            <div class="toggle" id="toggleV" title="Flip vertically" aria-label="Toggle vertical flip"><span class="swatch"></span>Flip V</div>
+            <div class="toggle" id="toggleH" title="Mirror horizontally" aria-label="Toggle horizontal mirror"><span class="swatch"></span>Mirror Video</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Actions</div>
+        <div class="panel-body">
+          <button class="action-btn" id="btnStream" aria-label="Start or stop the live feed">Start Feed</button>
+          <button class="action-btn primary" id="btnShutter" aria-label="Take a photo">Take Photo</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-grid">
+    <div class="panel">
+      <div class="panel-head">
+        <span>Capture History</span>
+        <span id="stripCount">0</span>
+      </div>
+      <div class="panel-body">
+        <div class="filmstrip" id="filmstrip">
+          <div class="empty-strip">No photos yet — captured frames appear here.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span>System Log</span>
+      </div>
+      <div class="panel-body">
+        <div class="log-list" id="logList"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-inner">
+    <img id="lightboxImg" src="" alt="Captured frame">
+    <div class="lightbox-meta">
+      <span id="lightboxLabel"></span>
+      <div class="lightbox-actions">
+        <a id="lightboxSave" download>Save</a>
+        <button id="lightboxClose" type="button">Close ✕</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const btnStream     = document.getElementById('btnStream');
+  const btnShutter    = document.getElementById('btnShutter');
+  const streamSlot    = document.getElementById('streamSlot');
+  const vfEmpty       = document.getElementById('vfEmpty');
+  const flash         = document.getElementById('flash');
+  const filmstrip     = document.getElementById('filmstrip');
+  const stripCount    = document.getElementById('stripCount');
+  const clockEl       = document.getElementById('clock');
+  const toggleV       = document.getElementById('toggleV');
+  const toggleH       = document.getElementById('toggleH');
+  const statusPill    = document.getElementById('statusPill');
+  const statusPillText= document.getElementById('statusPillText');
+  const topbarIp      = document.getElementById('topbarIp');
+  const relayHost     = document.getElementById('relayHost');
+  const viewerCount   = document.getElementById('viewerCount');
+  const deviceConnValue = document.getElementById('deviceConnValue');
+  const statRes       = document.getElementById('statRes');
+  const teleRes       = document.getElementById('teleRes');
+  const teleConn      = document.getElementById('teleConn');
+  const teleTime      = document.getElementById('teleTime');
+  const logList       = document.getElementById('logList');
+  const lightbox       = document.getElementById('lightbox');
+  const lightboxImg    = document.getElementById('lightboxImg');
+  const lightboxLabel  = document.getElementById('lightboxLabel');
+  const lightboxSave   = document.getElementById('lightboxSave');
+  const lightboxClose  = document.getElementById('lightboxClose');
+
+  // ---------------------------------------------------------
+  // CLOUD RELAY VERSION
+  // This page is served BY the relay server itself, so every
+  // endpoint (/stream, /capture, /flip, /status) is same-origin
+  // and baseUrl() is empty. There is no IP address to type in
+  // anywhere: the browser talks to the relay, the relay talks
+  // to the camera. The camera's own status comes from /status.
+  // ---------------------------------------------------------
+
+  let streaming = false;
+  let capturing = false;
+  let serverOnline = null;   // null = not yet checked
+  let cameraOnline = null;   // is the ESP32 connected to the relay
+  let captures = [];
+  let flipV = true;   // matches the firmware's default vflip(1)
+  let flipH = false;
+  let streamImgEl = null;
+  let streamRefreshTimer = null;
+  let streamRetryTimer = null;
+  let logEntries = [];
+
+  // ---------------------------------------------------------
+  // Stream recovery state. A single dropped connection is
+  // common and recovers on its own, so we stay quiet and keep
+  // retrying - "Offline" only shows after several failed
+  // reconnects in a row.
+  // ---------------------------------------------------------
+  let streamFailCount = 0;
+  const STREAM_FAIL_GRACE = 3;
+  let streamRetryDelay = 2000;
+
+  // Rebuild the /stream connection periodically while it's still
+  // healthy, instead of waiting for it to visibly degrade.
+  const STREAM_REFRESH_MS = 3 * 60 * 1000; // 3 minutes
+
+  function scheduleStreamRefresh(){
+    clearStreamRefresh();
+    streamRefreshTimer = setTimeout(() => {
+      if(streaming){ startStream(); }
+    }, STREAM_REFRESH_MS);
+  }
+  function clearStreamRefresh(){
+    if(streamRefreshTimer){
+      clearTimeout(streamRefreshTimer);
+      streamRefreshTimer = null;
+    }
+  }
+
+  // If the stream connection drops (relay restart, network
+  // blip), retry quietly in the background with backoff.
+  function scheduleStreamRetry(){
+    if(streamRetryTimer) return;
+    streamRetryTimer = setTimeout(() => {
+      streamRetryTimer = null;
+      if(streaming){ startStream(); }
+    }, streamRetryDelay);
+    streamRetryDelay = Math.min(streamRetryDelay * 2, 10000);
+  }
+  function clearStreamRetry(){
+    if(streamRetryTimer){
+      clearTimeout(streamRetryTimer);
+      streamRetryTimer = null;
+    }
+  }
+
+  // This page is served by the relay - everything is same-origin.
+  function baseUrl(){ return ''; }
+  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  function tickClock(){
+    const label = new Date().toLocaleTimeString('en-GB');
+    clockEl.textContent = label;
+    teleTime.textContent = label;
+  }
+  setInterval(tickClock, 1000);
+  tickClock();
+
+  // ================= system log =================
+  function logEvent(msg, level){
+    logEntries.unshift({ time: new Date().toLocaleTimeString('en-GB'), msg, level: level || 'info' });
+    if(logEntries.length > 40) logEntries.length = 40;
+    renderLog();
+  }
+  function renderLog(){
+    logList.innerHTML = '';
+    logEntries.forEach(e => {
+      const row = document.createElement('div');
+      row.className = `log-row ${e.level}`;
+      const t = document.createElement('span');
+      t.className = 'log-time';
+      t.textContent = e.time;
+      const m = document.createElement('span');
+      m.className = 'log-msg';
+      m.textContent = e.msg;
+      row.appendChild(t);
+      row.appendChild(m);
+      logList.appendChild(row);
+    });
+  }
+
+  function setStatus(msg, level){
+    logEvent(msg, level === 'err' ? 'err' : (level === 'ok' ? 'ok' : (level === 'warn' ? 'warn' : 'info')));
+  }
+
+  // ================= overall status pill =================
+  function renderStatusPill(){
+    let cls = 'idle', text = 'Idle';
+
+    if(capturing){
+      cls = 'capture'; text = 'Capture';
+    } else if(serverOnline === false){
+      cls = 'offline'; text = 'Offline';
+    } else if(cameraOnline === false){
+      cls = 'offline'; text = 'No Camera';
+    } else if(streaming){
+      cls = 'streaming'; text = 'Streaming';
+    } else if(cameraOnline === true){
+      cls = 'connected'; text = 'Connected';
+    }
+
+    statusPill.className = `status-pill ${cls}`;
+    statusPillText.textContent = text;
+    teleConn.textContent = text.toUpperCase();
+    deviceConnValue.textContent =
+      cameraOnline === null ? 'Not yet checked' :
+      cameraOnline ? 'Connected to relay' : 'Not connected';
+  }
+
+  // ================= relay status polling =================
+  // The browser only ever talks to the relay, not the camera,
+  // so it can't know by itself whether the ESP32 is actually
+  // connected. /status tells us: camera online, how many
+  // viewers are watching, and the real flip state (which also
+  // keeps this device's toggles in sync when ANOTHER device
+  // flips the camera).
+  async function pollStatus(){
+    try{
+      const res = await fetch(`${baseUrl()}/status?_=${Date.now()}`, { cache:'no-store' });
+      if(!res.ok) throw new Error();
+      const data = await res.json();
+
+      if(serverOnline !== true && serverOnline !== null){
+        logEvent('Relay server reachable.', 'ok');
+      }
+      serverOnline = true;
+
+      const camNow = !!data.camera;
+      if(cameraOnline !== null && cameraOnline !== camNow){
+        logEvent(camNow ? 'Camera connected to relay.' : 'Camera disconnected from relay.', camNow ? 'ok' : 'err');
+      }
+      cameraOnline = camNow;
+
+      viewerCount.textContent = data.viewers;
+
+      flipV = !!data.v;
+      flipH = !!data.h;
+      renderToggles();
+    }catch(err){
+      if(serverOnline !== false && serverOnline !== null){
+        logEvent('Relay server unreachable - retrying.', 'err');
+      }
+      if(serverOnline !== false){
+        serverOnline = false;
+        cameraOnline = null;
+      }
+    }
+    renderStatusPill();
+  }
+  setInterval(pollStatus, 4000);
+
+  // ================= stream =================
+  function destroyStreamImg(){
+    if(streamImgEl){
+      streamImgEl.removeEventListener('load', onStreamFrameLoad);
+      streamImgEl.src = '';
+      streamImgEl.remove();
+      streamImgEl = null;
+    }
+  }
+
+  function onStreamFrameLoad(){
+    // A frame arrived - the whole chain (relay + camera) is
+    // healthy, so reset the failure bookkeeping and any backoff.
+    streamFailCount = 0;
+    streamRetryDelay = 2000;
+    serverOnline = true;
+    cameraOnline = true;
+    renderStatusPill();
+
+    if(streamImgEl && streamImgEl.naturalWidth && streamImgEl.naturalHeight){
+      const res = `${streamImgEl.naturalWidth}×${streamImgEl.naturalHeight}`;
+      statRes.textContent = res;
+      teleRes.textContent = res;
+    }
+  }
+
+  function startStream(){
+    clearStreamRetry();
+
+    // Always build a brand new <img> element for each connection.
+    // Reusing one element and just swapping its src is what causes
+    // the feed to come back black after being stopped.
+    destroyStreamImg();
+
+    streaming = true;
+    vfEmpty.style.display = 'none';
+
+    const img = document.createElement('img');
+    img.addEventListener('load', onStreamFrameLoad);
+    img.addEventListener('error', () => {
+      if(!streaming) return;
+      streamFailCount++;
+      if(streamFailCount === STREAM_FAIL_GRACE){
+        serverOnline = false;
+        renderStatusPill();
+        setStatus('Feed unreachable — retrying in the background…', 'err');
+      }
+      scheduleStreamRetry();
+    });
+    img.src = `${baseUrl()}/stream?_=${Date.now()}`;
+    streamSlot.appendChild(img);
+    streamImgEl = img;
+
+    btnStream.textContent = 'Stop Feed';
+    btnStream.classList.add('stream-active');
+    setStatus('Streaming started.', 'ok');
+    renderStatusPill();
+
+    scheduleStreamRefresh();
+  }
+
+  function stopStream(){
+    // Only stops THIS device's view. The relay keeps running and
+    // other viewers are unaffected; the camera itself pauses its
+    // upload automatically once the LAST viewer disconnects.
+    streaming = false;
+    clearStreamRefresh();
+    clearStreamRetry();
+    destroyStreamImg();
+    vfEmpty.style.display = 'block';
+    btnStream.textContent = 'Start Feed';
+    btnStream.classList.remove('stream-active');
+    renderStatusPill();
+  }
+
+  btnStream.addEventListener('click', () => {
+    if(streaming){
+      stopStream();
+      setStatus('Feed stopped.');
+    } else {
+      streamFailCount = 0;
+      streamRetryDelay = 2000;
+      startStream();
+    }
+  });
+
+  // ================= capture =================
+  // No need to stop the feed first anymore: the relay hands us
+  // the next fresh frame straight from the live uplink, so the
+  // stream (and every other viewer) keeps running throughout.
+  async function takePhoto(){
+    capturing = true;
+    btnShutter.disabled = true;
+    renderStatusPill();
+
+    try{
+      setStatus('Capturing…');
+      const res = await fetch(`${baseUrl()}/capture?_=${Date.now()}`, { cache: 'no-store' });
+      if(!res.ok) throw new Error(`Server returned ${res.status} (camera may be offline)`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+      addCapture(objectUrl);
+      setStatus('Photo captured.', 'ok');
+
+    }catch(err){
+      setStatus(`Capture failed — ${err.message}`, 'err');
+    }finally{
+      capturing = false;
+      btnShutter.disabled = false;
+      renderStatusPill();
+    }
+  }
+  btnShutter.addEventListener('click', takePhoto);
+
+  function addCapture(objectUrl){
+    const stamp = new Date();
+    const label = stamp.toLocaleTimeString('en-GB');
+    captures.unshift({ url: objectUrl, label, index: captures.length + 1 });
+    renderFilmstrip();
+  }
+
+  function renderFilmstrip(){
+    stripCount.textContent = captures.length;
+
+    if(captures.length === 0){
+      filmstrip.innerHTML = '<div class="empty-strip">No photos yet — captured frames appear here.</div>';
+      return;
+    }
+
+    filmstrip.innerHTML = '';
+    captures.forEach((cap, i) => {
+      const frame = document.createElement('div');
+      frame.className = 'frame';
+
+      const img = document.createElement('img');
+      img.src = cap.url;
+      img.title = `Open frame #${captures.length - i}`;
+      img.addEventListener('click', () => openLightbox(cap));
+
+      const meta = document.createElement('div');
+      meta.className = 'frame-meta';
+
+      const idx = document.createElement('span');
+      idx.className = 'idx';
+      idx.textContent = `#${captures.length - i}`;
+
+      const time = document.createElement('span');
+      time.textContent = cap.label;
+
+      const dl = document.createElement('a');
+      dl.href = cap.url;
+      dl.download = `esp32cam_${cap.label.replace(/:/g,'-')}.jpg`;
+      dl.textContent = 'save';
+
+      meta.appendChild(idx);
+      meta.appendChild(time);
+      meta.appendChild(dl);
+      frame.appendChild(img);
+      frame.appendChild(meta);
+      filmstrip.appendChild(frame);
+    });
+  }
+
+  // ================= lightbox =================
+  function openLightbox(cap){
+    lightboxImg.src = cap.url;
+    lightboxLabel.textContent = `Frame #${cap.index} — ${cap.label}`;
+    lightboxSave.href = cap.url;
+    lightboxSave.download = `esp32cam_${cap.label.replace(/:/g,'-')}.jpg`;
+    lightbox.classList.add('show');
+  }
+  function closeLightbox(){ lightbox.classList.remove('show'); }
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeLightbox(); });
+
+  // ================= orientation (flip) =================
+  // Each button reflects ONLY its own axis. flipV starts true to
+  // match the firmware's default vflip(1). Commands go to the
+  // relay, which forwards them down the camera's WebSocket; the
+  // change applies to the live sensor, so the feed (and every
+  // other viewer's feed) just keeps running with the new
+  // orientation - no stop/restart needed.
+  function renderToggles(){
+    toggleV.classList.toggle('on', flipV);
+    toggleH.classList.toggle('on', flipH);
+  }
+
+  async function flipAxis(axis){
+    toggleV.style.pointerEvents = 'none';
+    toggleH.style.pointerEvents = 'none';
+
+    try{
+      const current = axis === 'v' ? flipV : flipH;
+      setStatus(`Flipping ${axis === 'v' ? 'vertical' : 'horizontal'}…`);
+      const res = await fetch(`${baseUrl()}/flip?${axis}=${current ? 0 : 1}&_=${Date.now()}`, { cache:'no-store' });
+      if(!res.ok) throw new Error(`Server returned ${res.status} (camera may be offline)`);
+      const data = await res.json();
+      flipV = !!data.v;
+      flipH = !!data.h;
+      renderToggles();
+      setStatus(`${axis === 'v' ? 'Vertical flip' : 'Horizontal mirror'} ${(axis === 'v' ? flipV : flipH) ? 'on' : 'off'}.`, 'ok');
+
+    }catch(err){
+      setStatus(`Could not flip the camera — ${err.message}`, 'err');
+    }finally{
+      toggleV.style.pointerEvents = '';
+      toggleH.style.pointerEvents = '';
+    }
+  }
+
+  toggleV.addEventListener('click', () => flipAxis('v'));
+  toggleH.addEventListener('click', () => flipAxis('h'));
+
+  // ================= boot =================
+  relayHost.textContent = location.host;
+  topbarIp.textContent = location.host;
+  renderToggles();
+  logEvent('Console loaded.');
+  startStream();
+  pollStatus();
+</script>
+</body>
+</html>
