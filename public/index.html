@@ -373,6 +373,8 @@
     display:flex;
     gap:10px;
     overflow-x:auto;
+    overflow-y:hidden;
+    max-height:180px;
     padding:2px 2px 4px;
   }
   .filmstrip::-webkit-scrollbar{ height:6px; }
@@ -396,14 +398,17 @@
   }
   .frame-meta{
     padding:6px 8px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .frame-meta-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
     font-family:var(--mono);
     font-size:9px;
     color:var(--ink-dim);
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:space-between;
-    align-items:center;
-    gap:4px 8px;
   }
   .frame-meta .idx{ color:var(--accent); }
   .frame-meta a{
@@ -1145,11 +1150,19 @@
         img.addEventListener('click', () => openLightbox(cap));
         const meta = document.createElement('div');
         meta.className = 'frame-meta';
+
+        const row1 = document.createElement('div');
+        row1.className = 'frame-meta-row';
         const idx = document.createElement('span');
         idx.className = 'idx';
         idx.textContent = `#${this.captures.length - i}`;
         const time = document.createElement('span');
         time.textContent = cap.label;
+        row1.appendChild(idx);
+        row1.appendChild(time);
+
+        const row2 = document.createElement('div');
+        row2.className = 'frame-meta-row';
         const dl = document.createElement('a');
         dl.href = cap.url;
         dl.download = `${cap.camId}_${cap.label.replace(/[/:]/g,'-').replace(/ /g,'_')}.jpg`;
@@ -1159,10 +1172,11 @@
         del.className = 'frame-del';
         del.textContent = 'delete';
         del.addEventListener('click', () => this.deleteCapture(i));
-        meta.appendChild(idx);
-        meta.appendChild(time);
-        meta.appendChild(dl);
-        meta.appendChild(del);
+        row2.appendChild(dl);
+        row2.appendChild(del);
+
+        meta.appendChild(row1);
+        meta.appendChild(row2);
         frame.appendChild(img);
         frame.appendChild(meta);
         this.filmstrip.appendChild(frame);
