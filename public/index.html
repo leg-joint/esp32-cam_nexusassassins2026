@@ -849,6 +849,21 @@
   lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
   document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeLightbox(); });
 
+  // ================= capture persistence =================
+  // Captures are saved to localStorage as base64 data URLs so
+  // they survive a page reload (kept per-browser, not on the
+  // server). Capped per camera to keep storage usage sane.
+  const MAX_STORED_CAPTURES = 20;
+
+  function blobToDataURL(blob){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Could not read captured image.'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
   // ============================================================
   // PER-CAMERA CLASS
   // ============================================================
@@ -885,7 +900,11 @@
       this.capturing = false;
       this.serverOnline = null;
       this.cameraOnline = null;
-      this.captures = [];
+      this.storageKey = `rovercam_captures_${camId}`;
+      this.captures = this.loadCaptures();
+      this.nextCaptureIndex = this.captures.length
+        ? Math.max(...this.captures.map(c => c.index || 0)) + 1
+        : 1;
       this.flipV = true;
       this.flipH = false;
       this.streamImgEl = null;
@@ -896,6 +915,7 @@
 
       this.bindEvents();
       this.renderToggles();
+      this.renderFilmstrip();
       this.log('Console loaded.');
       this.startStream();
       this.pollStatus();
@@ -1049,10 +1069,10 @@
         const res = await fetch(`${this.baseUrl()}/capture?id=${this.camId}&_=${Date.now()}`, { cache:'no-store' });
         if(!res.ok) throw new Error(`Server returned ${res.status} (camera may be offline)`);
         const blob = await res.blob();
-        const objectUrl = URL.createObjectURL(blob);
+        const dataUrl = await blobToDataURL(blob);
 
         this.flash.classList.remove('go'); void this.flash.offsetWidth; this.flash.classList.add('go');
-        this.addCapture(objectUrl);
+        this.addCapture(dataUrl);
         this.log('Photo captured.', 'ok');
       }catch(err){
         this.log(`Capture failed — ${err.message}`, 'err');
@@ -1063,10 +1083,33 @@
       }
     }
 
-    addCapture(objectUrl){
+    loadCaptures(){
+      try{
+        const raw = localStorage.getItem(this.storageKey);
+        if(!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      }catch(err){
+        return [];
+      }
+    }
+
+    persistCaptures(){
+      try{
+        localStorage.setItem(this.storageKey, JSON.stringify(this.captures));
+      }catch(err){
+        this.log('Could not save capture history locally (storage may be full).', 'warn');
+      }
+    }
+
+    addCapture(dataUrl){
       const stamp = new Date();
       const label = stamp.toLocaleTimeString('en-GB');
-      this.captures.unshift({ url: objectUrl, label, index: this.captures.length + 1, camId: this.camId });
+      this.captures.unshift({ url: dataUrl, label, index: this.nextCaptureIndex++, camId: this.camId });
+      if(this.captures.length > MAX_STORED_CAPTURES){
+        this.captures.length = MAX_STORED_CAPTURES;
+      }
+      this.persistCaptures();
       this.renderFilmstrip();
     }
 
