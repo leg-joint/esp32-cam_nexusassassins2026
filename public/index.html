@@ -400,8 +400,10 @@
     font-size:9px;
     color:var(--ink-dim);
     display:flex;
+    flex-wrap:wrap;
     justify-content:space-between;
     align-items:center;
+    gap:4px 8px;
   }
   .frame-meta .idx{ color:var(--accent); }
   .frame-meta a{
@@ -410,6 +412,18 @@
     letter-spacing:.05em;
   }
   .frame-meta a:hover{ color:var(--accent); text-decoration:underline; }
+  .frame-meta button.frame-del{
+    font: inherit;
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:.05em;
+    color:var(--ink-dim);
+    background:none;
+    border:none;
+    padding:0;
+    cursor:pointer;
+  }
+  .frame-meta button.frame-del:hover{ color:var(--red); text-decoration:underline; }
 
   .empty-strip{
     font-family:var(--mono);
@@ -1104,7 +1118,9 @@
 
     addCapture(dataUrl){
       const stamp = new Date();
-      const label = stamp.toLocaleTimeString('en-GB');
+      const dateStr = stamp.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
+      const timeStr = stamp.toLocaleTimeString('en-GB');
+      const label = `${dateStr} ${timeStr}`;
       this.captures.unshift({ url: dataUrl, label, index: this.nextCaptureIndex++, camId: this.camId });
       if(this.captures.length > MAX_STORED_CAPTURES){
         this.captures.length = MAX_STORED_CAPTURES;
@@ -1136,15 +1152,27 @@
         time.textContent = cap.label;
         const dl = document.createElement('a');
         dl.href = cap.url;
-        dl.download = `${cap.camId}_${cap.label.replace(/:/g,'-')}.jpg`;
+        dl.download = `${cap.camId}_${cap.label.replace(/[/:]/g,'-').replace(/ /g,'_')}.jpg`;
         dl.textContent = 'save';
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'frame-del';
+        del.textContent = 'delete';
+        del.addEventListener('click', () => this.deleteCapture(i));
         meta.appendChild(idx);
         meta.appendChild(time);
         meta.appendChild(dl);
+        meta.appendChild(del);
         frame.appendChild(img);
         frame.appendChild(meta);
         this.filmstrip.appendChild(frame);
       });
+    }
+
+    deleteCapture(i){
+      this.captures.splice(i, 1);
+      this.persistCaptures();
+      this.renderFilmstrip();
     }
 
     // ================= orientation =================
