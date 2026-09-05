@@ -125,30 +125,32 @@
   .topbar-ip b{ color:var(--ink); font-weight:600; }
   .topbar-clock{ letter-spacing:.05em; min-width:70px; text-align:right; }
 
-  /* ================= cameras grid ================= */
-  .cameras-grid{
+  /* ================= feeds grid (top) ================= */
+  .feeds-grid{
     display:grid;
     grid-template-columns: 1fr 1fr;
     gap:16px;
   }
   @media (max-width:1100px){
-    .cameras-grid{ grid-template-columns:1fr; }
+    .feeds-grid{ grid-template-columns:1fr; }
+  }
+  .feed-panel .panel-head{
+    font-size:11px;
   }
 
-  /* ================= camera unit ================= */
-  .camera-unit{
+  /* ================= controls grid (bottom) ================= */
+  .controls-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:16px;
+  }
+  @media (max-width:1100px){
+    .controls-grid{ grid-template-columns:1fr; }
+  }
+  .controls-col{
     display:flex;
     flex-direction:column;
     gap:14px;
-  }
-  .camera-main-grid{
-    display:grid;
-    grid-template-columns: 1fr 280px;
-    gap:14px;
-    align-items:start;
-  }
-  @media (max-width:700px){
-    .camera-main-grid{ grid-template-columns:1fr; }
   }
 
   /* ================= status pill ================= */
@@ -174,14 +176,13 @@
   .status-pill.idle{ color:var(--ink-dim); }
   .status-pill.idle .dot{ background:var(--ink-faint); }
 
-  .status-pill.connected, .status-pill.streaming{
+  .status-pill.connected{
     color:var(--green);
     border-color:var(--green-dim);
   }
-  .status-pill.connected .dot, .status-pill.streaming .dot{
+  .status-pill.connected .dot{
     background:var(--green);
   }
-  .status-pill.streaming .dot{ animation:blip 1.4s infinite; }
 
   .status-pill.capture{
     color:var(--amber);
@@ -266,39 +267,6 @@
   .corner.tr{ top:10px; right:10px; border-top:2px solid; border-right:2px solid; }
   .corner.bl{ bottom:10px; left:10px; border-bottom:2px solid; border-left:2px solid; }
   .corner.br{ bottom:10px; right:10px; border-bottom:2px solid; border-right:2px solid; }
-
-  .vf-overlay-top{
-    position:absolute;
-    top:10px; left:38px; right:38px;
-    display:flex;
-    justify-content:flex-end;
-    align-items:flex-start;
-    font-family:var(--mono);
-    font-size:10px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    pointer-events:none;
-  }
-
-  .vf-telemetry{
-    text-align:right;
-    color:var(--ink-dim);
-    line-height:1.6;
-  }
-  .vf-telemetry span{ color:var(--ink); }
-
-  .vf-overlay-bottom{
-    position:absolute;
-    bottom:10px; left:38px; right:38px;
-    display:flex;
-    justify-content:space-between;
-    font-family:var(--mono);
-    font-size:9.5px;
-    letter-spacing:.06em;
-    color:var(--ink-dim);
-    text-transform:uppercase;
-    pointer-events:none;
-  }
 
   .flash{
     position:absolute;
@@ -536,7 +504,6 @@
   .cam-label{ color:var(--accent); font-weight:600; }
 
 </style>
-<base target="_blank">
 </head>
 <body>
 
@@ -557,11 +524,12 @@
     </div>
   </div>
 
-  <div class="cameras-grid">
+  <!-- ================= CAMERA FEEDS (TOP) ================= -->
+  <div class="feeds-grid">
 
-    <!-- ================= CAMERA 1 ================= -->
-    <div class="camera-unit" data-cam="camera1">
-      <div class="camera-main-grid">
+    <div class="feed-panel panel" data-cam="camera1">
+      <div class="panel-head"><span class="cam-label">Rover Camera Feed</span></div>
+      <div class="panel-body">
         <div class="viewfinder">
           <div class="vf-empty">STREAM OFFLINE<br>press &ldquo;start feed&rdquo; to connect</div>
           <div class="stream-slot"></div>
@@ -571,54 +539,61 @@
           <div class="corner bl"></div>
           <div class="corner br"></div>
 
-          <div class="vf-overlay-top">
-            <div class="vf-telemetry">
-              RES <span class="tele-res">--</span>
-            </div>
-          </div>
+          <div class="flash"></div>
+        </div>
+      </div>
+    </div>
 
-          <div class="vf-overlay-bottom">
-            <div class="tele-conn">--</div>
-            <div class="tele-time">--:--:--</div>
-          </div>
+    <div class="feed-panel panel" data-cam="camera2">
+      <div class="panel-head"><span class="cam-label">Stationary Camera Feed</span></div>
+      <div class="panel-body">
+        <div class="viewfinder">
+          <div class="vf-empty">STREAM OFFLINE<br>press &ldquo;start feed&rdquo; to connect</div>
+          <div class="stream-slot"></div>
+
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
 
           <div class="flash"></div>
         </div>
+      </div>
+    </div>
 
-        <div class="camera-side">
-          <div class="panel">
-            <div class="panel-head">Device — <span class="cam-label">CAMERA 1</span></div>
-            <div class="panel-body">
-              <div class="status-pill idle"><span class="dot"></span><span class="status-text">Idle</span></div>
-              <div class="field">
-                <label>Camera (ESP32)</label>
-                <div class="value device-conn">Not yet checked</div>
-              </div>
-              <div class="field">
-                <label>Connected viewers</label>
-                <div class="value viewer-count">--</div>
-              </div>
-            </div>
-          </div>
+  </div>
 
-          <div class="panel">
-            <div class="panel-head">Camera</div>
-            <div class="panel-body">
-              <div class="stat-row"><span class="k">Resolution</span><span class="v stat-res">--</span></div>
-              <div class="toggle-row">
-                <div class="toggle toggle-v" title="Flip vertically" aria-label="Toggle vertical flip"><span class="swatch"></span>Flip V</div>
-                <div class="toggle toggle-h" title="Mirror horizontally" aria-label="Toggle horizontal mirror"><span class="swatch"></span>Mirror Video</div>
-              </div>
-            </div>
-          </div>
+  <!-- ================= CONTROLS (BOTTOM) ================= -->
+  <div class="controls-grid">
 
-          <div class="panel">
-            <div class="panel-head">Actions</div>
-            <div class="panel-body">
-              <button class="action-btn btn-stream" aria-label="Start or stop the live feed">Start Feed</button>
-              <button class="action-btn primary btn-shutter" aria-label="Take a photo">Take Photo</button>
-            </div>
+    <div class="controls-col" data-cam="camera1">
+      <div class="panel">
+        <div class="panel-head">Device — <span class="cam-label">Rover Camera Feed</span></div>
+        <div class="panel-body">
+          <div class="status-pill idle"><span class="dot"></span><span class="status-text">Idle</span></div>
+          <div class="field">
+            <label>Connected viewers</label>
+            <div class="value viewer-count">--</div>
           </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Camera</div>
+        <div class="panel-body">
+          <div class="stat-row"><span class="k">Resolution</span><span class="v stat-res">--</span></div>
+          <div class="toggle-row">
+            <div class="toggle toggle-v" title="Flip vertically" aria-label="Toggle vertical flip"><span class="swatch"></span>Flip V</div>
+            <div class="toggle toggle-h" title="Mirror horizontally" aria-label="Toggle horizontal mirror"><span class="swatch"></span>Mirror Video</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">Actions</div>
+        <div class="panel-body">
+          <button class="action-btn btn-stream" aria-label="Start or stop the live feed">Start Feed</button>
+          <button class="action-btn primary btn-shutter" aria-label="Take a photo">Take Photo</button>
         </div>
       </div>
 
@@ -635,66 +610,34 @@
       </div>
     </div>
 
-    <!-- ================= CAMERA 2 ================= -->
-    <div class="camera-unit" data-cam="camera2">
-      <div class="camera-main-grid">
-        <div class="viewfinder">
-          <div class="vf-empty">STREAM OFFLINE<br>press &ldquo;start feed&rdquo; to connect</div>
-          <div class="stream-slot"></div>
-
-          <div class="corner tl"></div>
-          <div class="corner tr"></div>
-          <div class="corner bl"></div>
-          <div class="corner br"></div>
-
-          <div class="vf-overlay-top">
-            <div class="vf-telemetry">
-              RES <span class="tele-res">--</span>
-            </div>
+    <div class="controls-col" data-cam="camera2">
+      <div class="panel">
+        <div class="panel-head">Device — <span class="cam-label">Stationary Camera Feed</span></div>
+        <div class="panel-body">
+          <div class="status-pill idle"><span class="dot"></span><span class="status-text">Idle</span></div>
+          <div class="field">
+            <label>Connected viewers</label>
+            <div class="value viewer-count">--</div>
           </div>
-
-          <div class="vf-overlay-bottom">
-            <div class="tele-conn">--</div>
-            <div class="tele-time">--:--:--</div>
-          </div>
-
-          <div class="flash"></div>
         </div>
+      </div>
 
-        <div class="camera-side">
-          <div class="panel">
-            <div class="panel-head">Device — <span class="cam-label">CAMERA 2</span></div>
-            <div class="panel-body">
-              <div class="status-pill idle"><span class="dot"></span><span class="status-text">Idle</span></div>
-              <div class="field">
-                <label>Camera (ESP32)</label>
-                <div class="value device-conn">Not yet checked</div>
-              </div>
-              <div class="field">
-                <label>Connected viewers</label>
-                <div class="value viewer-count">--</div>
-              </div>
-            </div>
+      <div class="panel">
+        <div class="panel-head">Camera</div>
+        <div class="panel-body">
+          <div class="stat-row"><span class="k">Resolution</span><span class="v stat-res">--</span></div>
+          <div class="toggle-row">
+            <div class="toggle toggle-v" title="Flip vertically" aria-label="Toggle vertical flip"><span class="swatch"></span>Flip V</div>
+            <div class="toggle toggle-h" title="Mirror horizontally" aria-label="Toggle horizontal mirror"><span class="swatch"></span>Mirror Video</div>
           </div>
+        </div>
+      </div>
 
-          <div class="panel">
-            <div class="panel-head">Camera</div>
-            <div class="panel-body">
-              <div class="stat-row"><span class="k">Resolution</span><span class="v stat-res">--</span></div>
-              <div class="toggle-row">
-                <div class="toggle toggle-v" title="Flip vertically" aria-label="Toggle vertical flip"><span class="swatch"></span>Flip V</div>
-                <div class="toggle toggle-h" title="Mirror horizontally" aria-label="Toggle horizontal mirror"><span class="swatch"></span>Mirror Video</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-head">Actions</div>
-            <div class="panel-body">
-              <button class="action-btn btn-stream" aria-label="Start or stop the live feed">Start Feed</button>
-              <button class="action-btn primary btn-shutter" aria-label="Take a photo">Take Photo</button>
-            </div>
-          </div>
+      <div class="panel">
+        <div class="panel-head">Actions</div>
+        <div class="panel-body">
+          <button class="action-btn btn-stream" aria-label="Start or stop the live feed">Start Feed</button>
+          <button class="action-btn primary btn-shutter" aria-label="Take a photo">Take Photo</button>
         </div>
       </div>
 
@@ -798,28 +741,34 @@
   // ============================================================
   // PER-CAMERA CLASS
   // ============================================================
-  class CameraUI {
-    constructor(camId, rootEl){
-      this.camId = camId;
-      this.root = rootEl;
+  function camRoots(camId){
+    return document.querySelectorAll(`[data-cam="${camId}"]`);
+  }
+  function qCam(camId, sel){
+    for(const r of camRoots(camId)){
+      const el = r.querySelector(sel);
+      if(el) return el;
+    }
+    return null;
+  }
 
-      this.btnStream     = rootEl.querySelector('.btn-stream');
-      this.btnShutter    = rootEl.querySelector('.btn-shutter');
-      this.streamSlot    = rootEl.querySelector('.stream-slot');
-      this.vfEmpty       = rootEl.querySelector('.vf-empty');
-      this.flash         = rootEl.querySelector('.flash');
-      this.filmstrip     = rootEl.querySelector('.filmstrip');
-      this.stripCount    = rootEl.querySelector('.strip-count');
-      this.toggleV       = rootEl.querySelector('.toggle-v');
-      this.toggleH       = rootEl.querySelector('.toggle-h');
-      this.statusPill    = rootEl.querySelector('.status-pill');
-      this.statusText    = rootEl.querySelector('.status-text');
-      this.viewerCount   = rootEl.querySelector('.viewer-count');
-      this.deviceConnValue = rootEl.querySelector('.device-conn');
-      this.statRes       = rootEl.querySelector('.stat-res');
-      this.teleRes       = rootEl.querySelector('.tele-res');
-      this.teleConn      = rootEl.querySelector('.tele-conn');
-      this.teleTime      = rootEl.querySelector('.tele-time');
+  class CameraUI {
+    constructor(camId){
+      this.camId = camId;
+
+      this.btnStream     = qCam(camId, '.btn-stream');
+      this.btnShutter    = qCam(camId, '.btn-shutter');
+      this.streamSlot    = qCam(camId, '.stream-slot');
+      this.vfEmpty       = qCam(camId, '.vf-empty');
+      this.flash         = qCam(camId, '.flash');
+      this.filmstrip     = qCam(camId, '.filmstrip');
+      this.stripCount    = qCam(camId, '.strip-count');
+      this.toggleV       = qCam(camId, '.toggle-v');
+      this.toggleH       = qCam(camId, '.toggle-h');
+      this.statusPill    = qCam(camId, '.status-pill');
+      this.statusText    = qCam(camId, '.status-text');
+      this.viewerCount   = qCam(camId, '.viewer-count');
+      this.statRes       = qCam(camId, '.stat-res');
 
       this.streaming = false;
       this.capturing = false;
@@ -840,13 +789,10 @@
       this.startStream();
       this.pollStatus();
       setInterval(() => this.pollStatus(), 4000);
-      setInterval(() => this.tickClock(), 1000);
-      this.tickClock();
     }
 
     baseUrl(){ return ''; }
     log(msg, level){ logEvent(`[${this.camId.toUpperCase()}] ${msg}`, level); }
-    tickClock(){ this.teleTime.textContent = new Date().toLocaleTimeString('en-GB'); }
 
     // ================= status =================
     renderStatusPill(){
@@ -854,15 +800,10 @@
       if(this.capturing){ cls = 'capture'; text = 'Capture'; }
       else if(this.serverOnline === false){ cls = 'offline'; text = 'Offline'; }
       else if(this.cameraOnline === false){ cls = 'offline'; text = 'No Camera'; }
-      else if(this.streaming){ cls = 'streaming'; text = 'Streaming'; }
       else if(this.cameraOnline === true){ cls = 'connected'; text = 'Connected'; }
 
       this.statusPill.className = `status-pill ${cls}`;
       this.statusText.textContent = text;
-      this.teleConn.textContent = text.toUpperCase();
-      this.deviceConnValue.textContent =
-        this.cameraOnline === null ? 'Not yet checked' :
-        this.cameraOnline ? 'Connected to relay' : 'Not connected';
     }
 
     async pollStatus(){
@@ -940,7 +881,6 @@
       if(this.streamImgEl && this.streamImgEl.naturalWidth && this.streamImgEl.naturalHeight){
         const res = `${this.streamImgEl.naturalWidth}×${this.streamImgEl.naturalHeight}`;
         this.statRes.textContent = res;
-        this.teleRes.textContent = res;
       }
     }
 
@@ -1101,9 +1041,8 @@
   // ============================================================
   // BOOT: instantiate both cameras
   // ============================================================
-  document.querySelectorAll('.camera-unit').forEach(el => {
-    new CameraUI(el.dataset.cam, el);
-  });
+  const camIds = [...new Set(Array.from(document.querySelectorAll('[data-cam]')).map(el => el.dataset.cam))];
+  camIds.forEach(id => new CameraUI(id));
 </script>
 </body>
 </html>
