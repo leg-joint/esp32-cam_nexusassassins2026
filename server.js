@@ -8,7 +8,8 @@
 //   GET /stream?id=...   -> MJPEG stream for the requested camera
 //   GET /capture?id=...  -> single fresh JPEG frame
 //   GET /flip?id=...     -> report / set flip state
-//   GET /status?id=...   -> { camera, viewers, frames, v, h }
+//   GET /servo?id=...    -> report / set servo angle (D13, 0-180)
+//   GET /status?id=...   -> { camera, viewers, frames, v, h, servo }
 //   WS  /cam?id=...      -> per-camera ESP32 uplink
 //
 // Each camera is completely independent: its own connection,
@@ -51,6 +52,7 @@ function getOrCreateCamera(id) {
       latestFrame: null,           // newest JPEG Buffer
       frameSeq: 0,                 // increments on every new frame
       flipState: { v: 1, h: 0 },   // last known orientation
+      servoAngle: 90,              // last known servo angle (D13)
       viewers: new Set(),          // open /stream responses
       frameEvents: new EventEmitter(),
       pendingAcks: new Map(),      // command id -> { resolve, timer }
@@ -199,6 +201,32 @@ app.get('/flip', async (req, res) => {
 });
 
 // ------------------------------------------------------------
+// /servo — per camera (servo on D13, angle 0-180)
+// ------------------------------------------------------------
+
+app.get('/servo', async (req, res) => {
+  const camId = req.query.id || 'camera1';
+  const camState = getOrCreateCamera(camId);
+  const hasParam = 'angle' in req.query;
+
+  if (!hasParam) {
+    return res.json({ servo: camState.servoAngle, camera: !!camState.ws });
+  }
+
+  let angle = parseInt(req.query.angle, 10);
+  if (Number.isNaN(angle)) angle = camState.servoAngle;
+  angle = Math.max(0, Math.min(180, angle));
+
+  try {
+    const ack = await camCommand(camId, { cmd: 'servo', angle });
+    camState.servoAngle = ack.servo;
+    res.json({ servo: camState.servoAngle });
+  } catch (err) {
+    res.status(503).json({ ok: false, error: err.message });
+  }
+});
+
+// ------------------------------------------------------------
 // /status — per camera
 // ------------------------------------------------------------
 
@@ -211,6 +239,7 @@ app.get('/status', (req, res) => {
     frames: camState.frameSeq,
     v: camState.flipState.v,
     h: camState.flipState.h,
+    servo: camState.servoAngle,
   });
 });
 
@@ -331,6 +360,7 @@ wss.on('connection', (ws) => {
 
     if (typeof msg.v === 'number') state.flipState.v = msg.v;
     if (typeof msg.h === 'number') state.flipState.h = msg.h;
+    if (typeof msg.servo === 'number') state.servoAngle = msg.servo;
 
     if (msg.ack && state.pendingAcks.has(msg.ack)) {
       const p = state.pendingAcks.get(msg.ack);
