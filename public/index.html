@@ -503,11 +503,87 @@
 
   .cam-label{ color:var(--accent); font-weight:600; }
 
+  /* ================= servo control (top) ================= */
+  .servo-panel .panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .servo-value{
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:600;
+    color:var(--accent);
+    letter-spacing:.04em;
+  }
+  .servo-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .servo-row .servo-tick{
+    font-family:var(--mono);
+    font-size:9.5px;
+    color:var(--ink-faint);
+    letter-spacing:.05em;
+  }
+  .servo-slider{
+    flex:1;
+    appearance:none;
+    -webkit-appearance:none;
+    height:4px;
+    border-radius:999px;
+    background:var(--line);
+    outline:none;
+    cursor:pointer;
+  }
+  .servo-slider::-webkit-slider-thumb{
+    appearance:none;
+    -webkit-appearance:none;
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--accent);
+    border:2px solid #04141a;
+    box-shadow:0 0 0 1px var(--accent-dim);
+    cursor:pointer;
+  }
+  .servo-slider::-moz-range-thumb{
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--accent);
+    border:2px solid #04141a;
+    box-shadow:0 0 0 1px var(--accent-dim);
+    cursor:pointer;
+  }
+  .servo-slider::-moz-range-track{
+    height:4px;
+    border-radius:999px;
+    background:var(--line);
+  }
+  .servo-slider:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+  }
+
 </style>
 </head>
 <body>
 
 <div class="app">
+
+  <div class="panel servo-panel">
+    <div class="panel-head">
+      <span>Servo Control — D13</span>
+      <span class="servo-value" id="servoValue">90°</span>
+    </div>
+    <div class="panel-body">
+      <div class="servo-row">
+        <span class="servo-tick">0°</span>
+        <input type="range" class="servo-slider" id="servoSlider" min="0" max="180" step="1" value="90" aria-label="Servo angle control">
+        <span class="servo-tick">180°</span>
+      </div>
+    </div>
+  </div>
 
   <div class="topbar">
     <div class="brand">
@@ -724,6 +800,41 @@
   tickClock();
 
   topbarIp.textContent = location.host;
+
+  // ================= servo control =================
+  const SERVO_CAM_ID  = 'camera1';
+  const servoSlider   = document.getElementById('servoSlider');
+  const servoValueEl  = document.getElementById('servoValue');
+
+  function setServoDisplay(angle){
+    servoValueEl.textContent = `${angle}°`;
+  }
+
+  function sendServoAngle(angle){
+    fetch(`/servo?id=${SERVO_CAM_ID}&angle=${angle}&_=${Date.now()}`, { cache:'no-store' })
+      .then(res => { if(!res.ok) throw new Error(`Server returned ${res.status}`); return res.json(); })
+      .then(data => {
+        if(typeof data.servo === 'number'){
+          servoSlider.value = data.servo;
+          setServoDisplay(data.servo);
+        }
+        logEvent(`Servo set to ${angle}°.`, 'ok');
+      })
+      .catch(err => logEvent(`Servo command failed — ${err.message}`, 'err'));
+  }
+
+  servoSlider.addEventListener('input', () => setServoDisplay(servoSlider.value));
+  servoSlider.addEventListener('change', () => sendServoAngle(Number(servoSlider.value)));
+
+  fetch(`/servo?id=${SERVO_CAM_ID}&_=${Date.now()}`, { cache:'no-store' })
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+      if(data && typeof data.servo === 'number'){
+        servoSlider.value = data.servo;
+        setServoDisplay(data.servo);
+      }
+    })
+    .catch(() => {});
 
   // ================= lightbox =================
   function openLightbox(cap){
