@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rover Camera</title>
+<title>Rover Camera — Dual</title>
 <style>
   :root{
     --bg:#0a0d10;
@@ -36,9 +36,7 @@
     font-family:var(--sans);
   }
 
-  body{
-    min-height:100vh;
-  }
+  body{ min-height:100vh; }
 
   ::selection{ background:var(--accent-dim); color:#fff; }
 
@@ -55,7 +53,7 @@
 
   /* ================= layout shell ================= */
   .app{
-    max-width:1320px;
+    max-width:1480px;
     margin:0 auto;
     padding:16px 18px 40px;
     display:flex;
@@ -127,6 +125,32 @@
   .topbar-ip b{ color:var(--ink); font-weight:600; }
   .topbar-clock{ letter-spacing:.05em; min-width:70px; text-align:right; }
 
+  /* ================= cameras grid ================= */
+  .cameras-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:16px;
+  }
+  @media (max-width:1100px){
+    .cameras-grid{ grid-template-columns:1fr; }
+  }
+
+  /* ================= camera unit ================= */
+  .camera-unit{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .camera-main-grid{
+    display:grid;
+    grid-template-columns: 1fr 280px;
+    gap:14px;
+    align-items:start;
+  }
+  @media (max-width:700px){
+    .camera-main-grid{ grid-template-columns:1fr; }
+  }
+
   /* ================= status pill ================= */
   .status-pill{
     display:inline-flex;
@@ -140,6 +164,7 @@
     border-radius:999px;
     border:1px solid var(--line);
     background:var(--panel-2);
+    margin-bottom:10px;
   }
   .status-pill .dot{
     width:7px;height:7px;
@@ -173,23 +198,6 @@
   @keyframes blip{
     0%,100%{ opacity:1; }
     50%{ opacity:.3; }
-  }
-
-  /* ================= grids ================= */
-  .main-grid{
-    display:grid;
-    grid-template-columns: 1fr 320px;
-    gap:16px;
-    align-items:start;
-  }
-  .bottom-grid{
-    display:grid;
-    grid-template-columns: 1fr 320px;
-    gap:16px;
-    align-items:start;
-  }
-  @media (max-width:900px){
-    .main-grid, .bottom-grid{ grid-template-columns:1fr; }
   }
 
   /* ================= panels ================= */
@@ -447,7 +455,7 @@
     display:flex;
     flex-direction:column;
     gap:0;
-    max-height:200px;
+    max-height:220px;
     overflow-y:auto;
     font-family:var(--mono);
     font-size:10.5px;
@@ -525,7 +533,10 @@
   }
   .lightbox-actions a:hover, .lightbox-actions button:hover{ color:var(--accent); border-color:var(--accent-dim); }
 
+  .cam-label{ color:var(--accent); font-weight:600; }
+
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -536,105 +547,178 @@
       <div class="brand-mark">CAM</div>
       <div class="brand-text">
         <h1>Rover Camera</h1>
+        <div class="sub">Dual Camera Relay</div>
       </div>
     </div>
     <div class="topbar-right">
-      <div class="status-pill idle" id="statusPill"><span class="dot"></span><span id="statusPillText">Idle</span></div>
-      <div class="divider"></div>
       <div class="topbar-ip">RELAY <b id="topbarIp">--</b></div>
       <div class="divider"></div>
       <div class="topbar-clock" id="clock">--:--:--</div>
     </div>
   </div>
 
-  <div class="main-grid">
+  <div class="cameras-grid">
 
-    <!-- ================= viewfinder ================= -->
-    <div class="viewfinder" id="viewfinder">
-      <div class="vf-empty" id="vfEmpty">STREAM OFFLINE<br>press &ldquo;start feed&rdquo; to connect</div>
-      <div class="stream-slot" id="streamSlot"></div>
+    <!-- ================= CAMERA 1 ================= -->
+    <div class="camera-unit" data-cam="camera1">
+      <div class="camera-main-grid">
+        <div class="viewfinder">
+          <div class="vf-empty">STREAM OFFLINE<br>press &ldquo;start feed&rdquo; to connect</div>
+          <div class="stream-slot"></div>
 
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
 
-      <div class="vf-overlay-top">
-        <div class="vf-telemetry">
-          RES <span id="teleRes">--</span>
+          <div class="vf-overlay-top">
+            <div class="vf-telemetry">
+              RES <span class="tele-res">--</span>
+            </div>
+          </div>
+
+          <div class="vf-overlay-bottom">
+            <div class="tele-conn">--</div>
+            <div class="tele-time">--:--:--</div>
+          </div>
+
+          <div class="flash"></div>
+        </div>
+
+        <div class="camera-side">
+          <div class="panel">
+            <div class="panel-head">Device — <span class="cam-label">CAMERA 1</span></div>
+            <div class="panel-body">
+              <div class="status-pill idle"><span class="dot"></span><span class="status-text">Idle</span></div>
+              <div class="field">
+                <label>Camera (ESP32)</label>
+                <div class="value device-conn">Not yet checked</div>
+              </div>
+              <div class="field">
+                <label>Connected viewers</label>
+                <div class="value viewer-count">--</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">Camera</div>
+            <div class="panel-body">
+              <div class="stat-row"><span class="k">Resolution</span><span class="v stat-res">--</span></div>
+              <div class="toggle-row">
+                <div class="toggle toggle-v" title="Flip vertically" aria-label="Toggle vertical flip"><span class="swatch"></span>Flip V</div>
+                <div class="toggle toggle-h" title="Mirror horizontally" aria-label="Toggle horizontal mirror"><span class="swatch"></span>Mirror Video</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">Actions</div>
+            <div class="panel-body">
+              <button class="action-btn btn-stream" aria-label="Start or stop the live feed">Start Feed</button>
+              <button class="action-btn primary btn-shutter" aria-label="Take a photo">Take Photo</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="vf-overlay-bottom">
-        <div id="teleConn">-- </div>
-        <div id="teleTime">--:--:--</div>
+      <div class="panel">
+        <div class="panel-head">
+          <span>Capture History</span>
+          <span class="strip-count">0</span>
+        </div>
+        <div class="panel-body">
+          <div class="filmstrip">
+            <div class="empty-strip">No photos yet — captured frames appear here.</div>
+          </div>
+        </div>
       </div>
-
-      <div class="flash" id="flash"></div>
     </div>
 
-    <!-- ================= side panel ================= -->
-    <div class="side-col">
-      <div class="panel">
-        <div class="panel-head">Device</div>
-        <div class="panel-body">
-          <div class="field">
-            <label>Relay server</label>
-            <div class="value accent" id="relayHost">--</div>
+    <!-- ================= CAMERA 2 ================= -->
+    <div class="camera-unit" data-cam="camera2">
+      <div class="camera-main-grid">
+        <div class="viewfinder">
+          <div class="vf-empty">STREAM OFFLINE<br>press &ldquo;start feed&rdquo; to connect</div>
+          <div class="stream-slot"></div>
+
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+
+          <div class="vf-overlay-top">
+            <div class="vf-telemetry">
+              RES <span class="tele-res">--</span>
+            </div>
           </div>
-          <div class="field">
-            <label>Camera (ESP32)</label>
-            <div class="value" id="deviceConnValue">Not yet checked</div>
+
+          <div class="vf-overlay-bottom">
+            <div class="tele-conn">--</div>
+            <div class="tele-time">--:--:--</div>
           </div>
-          <div class="field">
-            <label>Connected viewers</label>
-            <div class="value" id="viewerCount">--</div>
+
+          <div class="flash"></div>
+        </div>
+
+        <div class="camera-side">
+          <div class="panel">
+            <div class="panel-head">Device — <span class="cam-label">CAMERA 2</span></div>
+            <div class="panel-body">
+              <div class="status-pill idle"><span class="dot"></span><span class="status-text">Idle</span></div>
+              <div class="field">
+                <label>Camera (ESP32)</label>
+                <div class="value device-conn">Not yet checked</div>
+              </div>
+              <div class="field">
+                <label>Connected viewers</label>
+                <div class="value viewer-count">--</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">Camera</div>
+            <div class="panel-body">
+              <div class="stat-row"><span class="k">Resolution</span><span class="v stat-res">--</span></div>
+              <div class="toggle-row">
+                <div class="toggle toggle-v" title="Flip vertically" aria-label="Toggle vertical flip"><span class="swatch"></span>Flip V</div>
+                <div class="toggle toggle-h" title="Mirror horizontally" aria-label="Toggle horizontal mirror"><span class="swatch"></span>Mirror Video</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">Actions</div>
+            <div class="panel-body">
+              <button class="action-btn btn-stream" aria-label="Start or stop the live feed">Start Feed</button>
+              <button class="action-btn primary btn-shutter" aria-label="Take a photo">Take Photo</button>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="panel">
-        <div class="panel-head">Camera</div>
-        <div class="panel-body">
-          <div class="stat-row"><span class="k">Resolution</span><span class="v" id="statRes">--</span></div>
-          <div class="toggle-row">
-            <div class="toggle" id="toggleV" title="Flip vertically" aria-label="Toggle vertical flip"><span class="swatch"></span>Flip V</div>
-            <div class="toggle" id="toggleH" title="Mirror horizontally" aria-label="Toggle horizontal mirror"><span class="swatch"></span>Mirror Video</div>
-          </div>
+        <div class="panel-head">
+          <span>Capture History</span>
+          <span class="strip-count">0</span>
         </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">Actions</div>
         <div class="panel-body">
-          <button class="action-btn" id="btnStream" aria-label="Start or stop the live feed">Start Feed</button>
-          <button class="action-btn primary" id="btnShutter" aria-label="Take a photo">Take Photo</button>
+          <div class="filmstrip">
+            <div class="empty-strip">No photos yet — captured frames appear here.</div>
+          </div>
         </div>
       </div>
     </div>
 
   </div>
 
-  <div class="bottom-grid">
-    <div class="panel">
-      <div class="panel-head">
-        <span>Capture History</span>
-        <span id="stripCount">0</span>
-      </div>
-      <div class="panel-body">
-        <div class="filmstrip" id="filmstrip">
-          <div class="empty-strip">No photos yet — captured frames appear here.</div>
-        </div>
-      </div>
+  <div class="panel">
+    <div class="panel-head">
+      <span>System Log</span>
     </div>
-
-    <div class="panel">
-      <div class="panel-head">
-        <span>System Log</span>
-      </div>
-      <div class="panel-body">
-        <div class="log-list" id="logList"></div>
-      </div>
+    <div class="panel-body">
+      <div class="log-list" id="logList"></div>
     </div>
   </div>
 
@@ -652,115 +736,25 @@
     </div>
   </div>
 </div>
+
 <script>
-  const btnStream     = document.getElementById('btnStream');
-  const btnShutter    = document.getElementById('btnShutter');
-  const streamSlot    = document.getElementById('streamSlot');
-  const vfEmpty       = document.getElementById('vfEmpty');
-  const flash         = document.getElementById('flash');
-  const filmstrip     = document.getElementById('filmstrip');
-  const stripCount    = document.getElementById('stripCount');
-  const clockEl       = document.getElementById('clock');
-  const toggleV       = document.getElementById('toggleV');
-  const toggleH       = document.getElementById('toggleH');
-  const statusPill    = document.getElementById('statusPill');
-  const statusPillText= document.getElementById('statusPillText');
-  const topbarIp      = document.getElementById('topbarIp');
-  const relayHost     = document.getElementById('relayHost');
-  const viewerCount   = document.getElementById('viewerCount');
-  const deviceConnValue = document.getElementById('deviceConnValue');
-  const statRes       = document.getElementById('statRes');
-  const teleRes       = document.getElementById('teleRes');
-  const teleConn      = document.getElementById('teleConn');
-  const teleTime      = document.getElementById('teleTime');
+  // ============================================================
+  // GLOBALS: shared log + lightbox
+  // ============================================================
   const logList       = document.getElementById('logList');
   const lightbox       = document.getElementById('lightbox');
   const lightboxImg    = document.getElementById('lightboxImg');
   const lightboxLabel  = document.getElementById('lightboxLabel');
   const lightboxSave   = document.getElementById('lightboxSave');
   const lightboxClose  = document.getElementById('lightboxClose');
+  const clockEl        = document.getElementById('clock');
+  const topbarIp       = document.getElementById('topbarIp');
 
-  // ---------------------------------------------------------
-  // CLOUD RELAY VERSION
-  // This page is served BY the relay server itself, so every
-  // endpoint (/stream, /capture, /flip, /status) is same-origin
-  // and baseUrl() is empty. There is no IP address to type in
-  // anywhere: the browser talks to the relay, the relay talks
-  // to the camera. The camera's own status comes from /status.
-  // ---------------------------------------------------------
-
-  let streaming = false;
-  let capturing = false;
-  let serverOnline = null;   // null = not yet checked
-  let cameraOnline = null;   // is the ESP32 connected to the relay
-  let captures = [];
-  let flipV = true;   // matches the firmware's default vflip(1)
-  let flipH = false;
-  let streamImgEl = null;
-  let streamRefreshTimer = null;
-  let streamRetryTimer = null;
   let logEntries = [];
 
-  // ---------------------------------------------------------
-  // Stream recovery state. A single dropped connection is
-  // common and recovers on its own, so we stay quiet and keep
-  // retrying - "Offline" only shows after several failed
-  // reconnects in a row.
-  // ---------------------------------------------------------
-  let streamFailCount = 0;
-  const STREAM_FAIL_GRACE = 3;
-  let streamRetryDelay = 2000;
-
-  // Rebuild the /stream connection periodically while it's still
-  // healthy, instead of waiting for it to visibly degrade.
-  const STREAM_REFRESH_MS = 3 * 60 * 1000; // 3 minutes
-
-  function scheduleStreamRefresh(){
-    clearStreamRefresh();
-    streamRefreshTimer = setTimeout(() => {
-      if(streaming){ startStream(); }
-    }, STREAM_REFRESH_MS);
-  }
-  function clearStreamRefresh(){
-    if(streamRefreshTimer){
-      clearTimeout(streamRefreshTimer);
-      streamRefreshTimer = null;
-    }
-  }
-
-  // If the stream connection drops (relay restart, network
-  // blip), retry quietly in the background with backoff.
-  function scheduleStreamRetry(){
-    if(streamRetryTimer) return;
-    streamRetryTimer = setTimeout(() => {
-      streamRetryTimer = null;
-      if(streaming){ startStream(); }
-    }, streamRetryDelay);
-    streamRetryDelay = Math.min(streamRetryDelay * 2, 10000);
-  }
-  function clearStreamRetry(){
-    if(streamRetryTimer){
-      clearTimeout(streamRetryTimer);
-      streamRetryTimer = null;
-    }
-  }
-
-  // This page is served by the relay - everything is same-origin.
-  function baseUrl(){ return ''; }
-  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-  function tickClock(){
-    const label = new Date().toLocaleTimeString('en-GB');
-    clockEl.textContent = label;
-    teleTime.textContent = label;
-  }
-  setInterval(tickClock, 1000);
-  tickClock();
-
-  // ================= system log =================
   function logEvent(msg, level){
     logEntries.unshift({ time: new Date().toLocaleTimeString('en-GB'), msg, level: level || 'info' });
-    if(logEntries.length > 40) logEntries.length = 40;
+    if(logEntries.length > 60) logEntries.length = 60;
     renderLog();
   }
   function renderLog(){
@@ -780,247 +774,20 @@
     });
   }
 
-  function setStatus(msg, level){
-    logEvent(msg, level === 'err' ? 'err' : (level === 'ok' ? 'ok' : (level === 'warn' ? 'warn' : 'info')));
+  function tickClock(){
+    clockEl.textContent = new Date().toLocaleTimeString('en-GB');
   }
+  setInterval(tickClock, 1000);
+  tickClock();
 
-  // ================= overall status pill =================
-  function renderStatusPill(){
-    let cls = 'idle', text = 'Idle';
-
-    if(capturing){
-      cls = 'capture'; text = 'Capture';
-    } else if(serverOnline === false){
-      cls = 'offline'; text = 'Offline';
-    } else if(cameraOnline === false){
-      cls = 'offline'; text = 'No Camera';
-    } else if(streaming){
-      cls = 'streaming'; text = 'Streaming';
-    } else if(cameraOnline === true){
-      cls = 'connected'; text = 'Connected';
-    }
-
-    statusPill.className = `status-pill ${cls}`;
-    statusPillText.textContent = text;
-    teleConn.textContent = text.toUpperCase();
-    deviceConnValue.textContent =
-      cameraOnline === null ? 'Not yet checked' :
-      cameraOnline ? 'Connected to relay' : 'Not connected';
-  }
-
-  // ================= relay status polling =================
-  // The browser only ever talks to the relay, not the camera,
-  // so it can't know by itself whether the ESP32 is actually
-  // connected. /status tells us: camera online, how many
-  // viewers are watching, and the real flip state (which also
-  // keeps this device's toggles in sync when ANOTHER device
-  // flips the camera).
-  async function pollStatus(){
-    try{
-      const res = await fetch(`${baseUrl()}/status?_=${Date.now()}`, { cache:'no-store' });
-      if(!res.ok) throw new Error();
-      const data = await res.json();
-
-      if(serverOnline !== true && serverOnline !== null){
-        logEvent('Relay server reachable.', 'ok');
-      }
-      serverOnline = true;
-
-      const camNow = !!data.camera;
-      if(cameraOnline !== null && cameraOnline !== camNow){
-        logEvent(camNow ? 'Camera connected to relay.' : 'Camera disconnected from relay.', camNow ? 'ok' : 'err');
-      }
-      cameraOnline = camNow;
-
-      viewerCount.textContent = data.viewers;
-
-      flipV = !!data.v;
-      flipH = !!data.h;
-      renderToggles();
-    }catch(err){
-      if(serverOnline !== false && serverOnline !== null){
-        logEvent('Relay server unreachable - retrying.', 'err');
-      }
-      if(serverOnline !== false){
-        serverOnline = false;
-        cameraOnline = null;
-      }
-    }
-    renderStatusPill();
-  }
-  setInterval(pollStatus, 4000);
-
-  // ================= stream =================
-  function destroyStreamImg(){
-    if(streamImgEl){
-      streamImgEl.removeEventListener('load', onStreamFrameLoad);
-      streamImgEl.src = '';
-      streamImgEl.remove();
-      streamImgEl = null;
-    }
-  }
-
-  function onStreamFrameLoad(){
-    // A frame arrived - the whole chain (relay + camera) is
-    // healthy, so reset the failure bookkeeping and any backoff.
-    streamFailCount = 0;
-    streamRetryDelay = 2000;
-    serverOnline = true;
-    cameraOnline = true;
-    renderStatusPill();
-
-    if(streamImgEl && streamImgEl.naturalWidth && streamImgEl.naturalHeight){
-      const res = `${streamImgEl.naturalWidth}×${streamImgEl.naturalHeight}`;
-      statRes.textContent = res;
-      teleRes.textContent = res;
-    }
-  }
-
-  function startStream(){
-    clearStreamRetry();
-
-    // Always build a brand new <img> element for each connection.
-    // Reusing one element and just swapping its src is what causes
-    // the feed to come back black after being stopped.
-    destroyStreamImg();
-
-    streaming = true;
-    vfEmpty.style.display = 'none';
-
-    const img = document.createElement('img');
-    img.addEventListener('load', onStreamFrameLoad);
-    img.addEventListener('error', () => {
-      if(!streaming) return;
-      streamFailCount++;
-      if(streamFailCount === STREAM_FAIL_GRACE){
-        serverOnline = false;
-        renderStatusPill();
-        setStatus('Feed unreachable — retrying in the background…', 'err');
-      }
-      scheduleStreamRetry();
-    });
-    img.src = `${baseUrl()}/stream?_=${Date.now()}`;
-    streamSlot.appendChild(img);
-    streamImgEl = img;
-
-    btnStream.textContent = 'Stop Feed';
-    btnStream.classList.add('stream-active');
-    setStatus('Streaming started.', 'ok');
-    renderStatusPill();
-
-    scheduleStreamRefresh();
-  }
-
-  function stopStream(){
-    // Only stops THIS device's view. The relay keeps running and
-    // other viewers are unaffected; the camera itself pauses its
-    // upload automatically once the LAST viewer disconnects.
-    streaming = false;
-    clearStreamRefresh();
-    clearStreamRetry();
-    destroyStreamImg();
-    vfEmpty.style.display = 'block';
-    btnStream.textContent = 'Start Feed';
-    btnStream.classList.remove('stream-active');
-    renderStatusPill();
-  }
-
-  btnStream.addEventListener('click', () => {
-    if(streaming){
-      stopStream();
-      setStatus('Feed stopped.');
-    } else {
-      streamFailCount = 0;
-      streamRetryDelay = 2000;
-      startStream();
-    }
-  });
-
-  // ================= capture =================
-  // No need to stop the feed first anymore: the relay hands us
-  // the next fresh frame straight from the live uplink, so the
-  // stream (and every other viewer) keeps running throughout.
-  async function takePhoto(){
-    capturing = true;
-    btnShutter.disabled = true;
-    renderStatusPill();
-
-    try{
-      setStatus('Capturing…');
-      const res = await fetch(`${baseUrl()}/capture?_=${Date.now()}`, { cache: 'no-store' });
-      if(!res.ok) throw new Error(`Server returned ${res.status} (camera may be offline)`);
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
-
-      flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
-      addCapture(objectUrl);
-      setStatus('Photo captured.', 'ok');
-
-    }catch(err){
-      setStatus(`Capture failed — ${err.message}`, 'err');
-    }finally{
-      capturing = false;
-      btnShutter.disabled = false;
-      renderStatusPill();
-    }
-  }
-  btnShutter.addEventListener('click', takePhoto);
-
-  function addCapture(objectUrl){
-    const stamp = new Date();
-    const label = stamp.toLocaleTimeString('en-GB');
-    captures.unshift({ url: objectUrl, label, index: captures.length + 1 });
-    renderFilmstrip();
-  }
-
-  function renderFilmstrip(){
-    stripCount.textContent = captures.length;
-
-    if(captures.length === 0){
-      filmstrip.innerHTML = '<div class="empty-strip">No photos yet — captured frames appear here.</div>';
-      return;
-    }
-
-    filmstrip.innerHTML = '';
-    captures.forEach((cap, i) => {
-      const frame = document.createElement('div');
-      frame.className = 'frame';
-
-      const img = document.createElement('img');
-      img.src = cap.url;
-      img.title = `Open frame #${captures.length - i}`;
-      img.addEventListener('click', () => openLightbox(cap));
-
-      const meta = document.createElement('div');
-      meta.className = 'frame-meta';
-
-      const idx = document.createElement('span');
-      idx.className = 'idx';
-      idx.textContent = `#${captures.length - i}`;
-
-      const time = document.createElement('span');
-      time.textContent = cap.label;
-
-      const dl = document.createElement('a');
-      dl.href = cap.url;
-      dl.download = `esp32cam_${cap.label.replace(/:/g,'-')}.jpg`;
-      dl.textContent = 'save';
-
-      meta.appendChild(idx);
-      meta.appendChild(time);
-      meta.appendChild(dl);
-      frame.appendChild(img);
-      frame.appendChild(meta);
-      filmstrip.appendChild(frame);
-    });
-  }
+  topbarIp.textContent = location.host;
 
   // ================= lightbox =================
   function openLightbox(cap){
     lightboxImg.src = cap.url;
-    lightboxLabel.textContent = `Frame #${cap.index} — ${cap.label}`;
+    lightboxLabel.textContent = `${cap.camId.toUpperCase()} — Frame #${cap.index} — ${cap.label}`;
     lightboxSave.href = cap.url;
-    lightboxSave.download = `esp32cam_${cap.label.replace(/:/g,'-')}.jpg`;
+    lightboxSave.download = `${cap.camId}_${cap.label.replace(/:/g,'-')}.jpg`;
     lightbox.classList.add('show');
   }
   function closeLightbox(){ lightbox.classList.remove('show'); }
@@ -1028,51 +795,315 @@
   lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
   document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeLightbox(); });
 
-  // ================= orientation (flip) =================
-  // Each button reflects ONLY its own axis. flipV starts true to
-  // match the firmware's default vflip(1). Commands go to the
-  // relay, which forwards them down the camera's WebSocket; the
-  // change applies to the live sensor, so the feed (and every
-  // other viewer's feed) just keeps running with the new
-  // orientation - no stop/restart needed.
-  function renderToggles(){
-    toggleV.classList.toggle('on', flipV);
-    toggleH.classList.toggle('on', flipH);
-  }
+  // ============================================================
+  // PER-CAMERA CLASS
+  // ============================================================
+  class CameraUI {
+    constructor(camId, rootEl){
+      this.camId = camId;
+      this.root = rootEl;
 
-  async function flipAxis(axis){
-    toggleV.style.pointerEvents = 'none';
-    toggleH.style.pointerEvents = 'none';
+      this.btnStream     = rootEl.querySelector('.btn-stream');
+      this.btnShutter    = rootEl.querySelector('.btn-shutter');
+      this.streamSlot    = rootEl.querySelector('.stream-slot');
+      this.vfEmpty       = rootEl.querySelector('.vf-empty');
+      this.flash         = rootEl.querySelector('.flash');
+      this.filmstrip     = rootEl.querySelector('.filmstrip');
+      this.stripCount    = rootEl.querySelector('.strip-count');
+      this.toggleV       = rootEl.querySelector('.toggle-v');
+      this.toggleH       = rootEl.querySelector('.toggle-h');
+      this.statusPill    = rootEl.querySelector('.status-pill');
+      this.statusText    = rootEl.querySelector('.status-text');
+      this.viewerCount   = rootEl.querySelector('.viewer-count');
+      this.deviceConnValue = rootEl.querySelector('.device-conn');
+      this.statRes       = rootEl.querySelector('.stat-res');
+      this.teleRes       = rootEl.querySelector('.tele-res');
+      this.teleConn      = rootEl.querySelector('.tele-conn');
+      this.teleTime      = rootEl.querySelector('.tele-time');
 
-    try{
-      const current = axis === 'v' ? flipV : flipH;
-      setStatus(`Flipping ${axis === 'v' ? 'vertical' : 'horizontal'}…`);
-      const res = await fetch(`${baseUrl()}/flip?${axis}=${current ? 0 : 1}&_=${Date.now()}`, { cache:'no-store' });
-      if(!res.ok) throw new Error(`Server returned ${res.status} (camera may be offline)`);
-      const data = await res.json();
-      flipV = !!data.v;
-      flipH = !!data.h;
-      renderToggles();
-      setStatus(`${axis === 'v' ? 'Vertical flip' : 'Horizontal mirror'} ${(axis === 'v' ? flipV : flipH) ? 'on' : 'off'}.`, 'ok');
+      this.streaming = false;
+      this.capturing = false;
+      this.serverOnline = null;
+      this.cameraOnline = null;
+      this.captures = [];
+      this.flipV = true;
+      this.flipH = false;
+      this.streamImgEl = null;
+      this.streamRefreshTimer = null;
+      this.streamRetryTimer = null;
+      this.streamFailCount = 0;
+      this.streamRetryDelay = 2000;
 
-    }catch(err){
-      setStatus(`Could not flip the camera — ${err.message}`, 'err');
-    }finally{
-      toggleV.style.pointerEvents = '';
-      toggleH.style.pointerEvents = '';
+      this.bindEvents();
+      this.renderToggles();
+      this.log('Console loaded.');
+      this.startStream();
+      this.pollStatus();
+      setInterval(() => this.pollStatus(), 4000);
+      setInterval(() => this.tickClock(), 1000);
+      this.tickClock();
+    }
+
+    baseUrl(){ return ''; }
+    log(msg, level){ logEvent(`[${this.camId.toUpperCase()}] ${msg}`, level); }
+    tickClock(){ this.teleTime.textContent = new Date().toLocaleTimeString('en-GB'); }
+
+    // ================= status =================
+    renderStatusPill(){
+      let cls = 'idle', text = 'Idle';
+      if(this.capturing){ cls = 'capture'; text = 'Capture'; }
+      else if(this.serverOnline === false){ cls = 'offline'; text = 'Offline'; }
+      else if(this.cameraOnline === false){ cls = 'offline'; text = 'No Camera'; }
+      else if(this.streaming){ cls = 'streaming'; text = 'Streaming'; }
+      else if(this.cameraOnline === true){ cls = 'connected'; text = 'Connected'; }
+
+      this.statusPill.className = `status-pill ${cls}`;
+      this.statusText.textContent = text;
+      this.teleConn.textContent = text.toUpperCase();
+      this.deviceConnValue.textContent =
+        this.cameraOnline === null ? 'Not yet checked' :
+        this.cameraOnline ? 'Connected to relay' : 'Not connected';
+    }
+
+    async pollStatus(){
+      try{
+        const res = await fetch(`${this.baseUrl()}/status?id=${this.camId}&_=${Date.now()}`, { cache:'no-store' });
+        if(!res.ok) throw new Error();
+        const data = await res.json();
+
+        if(this.serverOnline !== true && this.serverOnline !== null){
+          this.log('Relay server reachable.', 'ok');
+        }
+        this.serverOnline = true;
+
+        const camNow = !!data.camera;
+        if(this.cameraOnline !== null && this.cameraOnline !== camNow){
+          this.log(camNow ? 'Camera connected to relay.' : 'Camera disconnected from relay.', camNow ? 'ok' : 'err');
+        }
+        this.cameraOnline = camNow;
+        this.viewerCount.textContent = data.viewers;
+
+        this.flipV = !!data.v;
+        this.flipH = !!data.h;
+        this.renderToggles();
+      }catch(err){
+        if(this.serverOnline !== false && this.serverOnline !== null){
+          this.log('Relay server unreachable - retrying.', 'err');
+        }
+        if(this.serverOnline !== false){
+          this.serverOnline = false;
+          this.cameraOnline = null;
+        }
+      }
+      this.renderStatusPill();
+    }
+
+    // ================= stream =================
+    scheduleStreamRefresh(){
+      clearTimeout(this.streamRefreshTimer);
+      this.streamRefreshTimer = setTimeout(() => {
+        if(this.streaming) this.startStream();
+      }, 3 * 60 * 1000);
+    }
+    clearStreamRefresh(){
+      if(this.streamRefreshTimer){ clearTimeout(this.streamRefreshTimer); this.streamRefreshTimer = null; }
+    }
+    scheduleStreamRetry(){
+      if(this.streamRetryTimer) return;
+      this.streamRetryTimer = setTimeout(() => {
+        this.streamRetryTimer = null;
+        if(this.streaming) this.startStream();
+      }, this.streamRetryDelay);
+      this.streamRetryDelay = Math.min(this.streamRetryDelay * 2, 10000);
+    }
+    clearStreamRetry(){
+      if(this.streamRetryTimer){ clearTimeout(this.streamRetryTimer); this.streamRetryTimer = null; }
+    }
+
+    destroyStreamImg(){
+      if(this.streamImgEl){
+        this.streamImgEl.removeEventListener('load', this._onLoad);
+        this.streamImgEl.removeEventListener('error', this._onErr);
+        this.streamImgEl.src = '';
+        this.streamImgEl.remove();
+        this.streamImgEl = null;
+      }
+    }
+
+    onStreamFrameLoad(){
+      this.streamFailCount = 0;
+      this.streamRetryDelay = 2000;
+      this.serverOnline = true;
+      this.cameraOnline = true;
+      this.renderStatusPill();
+
+      if(this.streamImgEl && this.streamImgEl.naturalWidth && this.streamImgEl.naturalHeight){
+        const res = `${this.streamImgEl.naturalWidth}×${this.streamImgEl.naturalHeight}`;
+        this.statRes.textContent = res;
+        this.teleRes.textContent = res;
+      }
+    }
+
+    startStream(){
+      this.clearStreamRetry();
+      this.destroyStreamImg();
+
+      this.streaming = true;
+      this.vfEmpty.style.display = 'none';
+
+      const img = document.createElement('img');
+      this._onLoad = () => this.onStreamFrameLoad();
+      this._onErr = () => {
+        if(!this.streaming) return;
+        this.streamFailCount++;
+        if(this.streamFailCount === 3){
+          this.serverOnline = false;
+          this.renderStatusPill();
+          this.log('Feed unreachable — retrying in the background…', 'err');
+        }
+        this.scheduleStreamRetry();
+      };
+      img.addEventListener('load', this._onLoad);
+      img.addEventListener('error', this._onErr);
+      img.src = `${this.baseUrl()}/stream?id=${this.camId}&_=${Date.now()}`;
+      this.streamSlot.appendChild(img);
+      this.streamImgEl = img;
+
+      this.btnStream.textContent = 'Stop Feed';
+      this.btnStream.classList.add('stream-active');
+      this.log('Streaming started.', 'ok');
+      this.renderStatusPill();
+      this.scheduleStreamRefresh();
+    }
+
+    stopStream(){
+      this.streaming = false;
+      this.clearStreamRefresh();
+      this.clearStreamRetry();
+      this.destroyStreamImg();
+      this.vfEmpty.style.display = 'block';
+      this.btnStream.textContent = 'Start Feed';
+      this.btnStream.classList.remove('stream-active');
+      this.renderStatusPill();
+    }
+
+    // ================= capture =================
+    async takePhoto(){
+      this.capturing = true;
+      this.btnShutter.disabled = true;
+      this.renderStatusPill();
+
+      try{
+        this.log('Capturing…');
+        const res = await fetch(`${this.baseUrl()}/capture?id=${this.camId}&_=${Date.now()}`, { cache:'no-store' });
+        if(!res.ok) throw new Error(`Server returned ${res.status} (camera may be offline)`);
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+
+        this.flash.classList.remove('go'); void this.flash.offsetWidth; this.flash.classList.add('go');
+        this.addCapture(objectUrl);
+        this.log('Photo captured.', 'ok');
+      }catch(err){
+        this.log(`Capture failed — ${err.message}`, 'err');
+      }finally{
+        this.capturing = false;
+        this.btnShutter.disabled = false;
+        this.renderStatusPill();
+      }
+    }
+
+    addCapture(objectUrl){
+      const stamp = new Date();
+      const label = stamp.toLocaleTimeString('en-GB');
+      this.captures.unshift({ url: objectUrl, label, index: this.captures.length + 1, camId: this.camId });
+      this.renderFilmstrip();
+    }
+
+    renderFilmstrip(){
+      this.stripCount.textContent = this.captures.length;
+      if(this.captures.length === 0){
+        this.filmstrip.innerHTML = '<div class="empty-strip">No photos yet — captured frames appear here.</div>';
+        return;
+      }
+      this.filmstrip.innerHTML = '';
+      this.captures.forEach((cap, i) => {
+        const frame = document.createElement('div');
+        frame.className = 'frame';
+        const img = document.createElement('img');
+        img.src = cap.url;
+        img.title = `Open frame #${this.captures.length - i}`;
+        img.addEventListener('click', () => openLightbox(cap));
+        const meta = document.createElement('div');
+        meta.className = 'frame-meta';
+        const idx = document.createElement('span');
+        idx.className = 'idx';
+        idx.textContent = `#${this.captures.length - i}`;
+        const time = document.createElement('span');
+        time.textContent = cap.label;
+        const dl = document.createElement('a');
+        dl.href = cap.url;
+        dl.download = `${cap.camId}_${cap.label.replace(/:/g,'-')}.jpg`;
+        dl.textContent = 'save';
+        meta.appendChild(idx);
+        meta.appendChild(time);
+        meta.appendChild(dl);
+        frame.appendChild(img);
+        frame.appendChild(meta);
+        this.filmstrip.appendChild(frame);
+      });
+    }
+
+    // ================= orientation =================
+    renderToggles(){
+      this.toggleV.classList.toggle('on', this.flipV);
+      this.toggleH.classList.toggle('on', this.flipH);
+    }
+
+    async flipAxis(axis){
+      this.toggleV.style.pointerEvents = 'none';
+      this.toggleH.style.pointerEvents = 'none';
+
+      try{
+        const current = axis === 'v' ? this.flipV : this.flipH;
+        this.log(`Flipping ${axis === 'v' ? 'vertical' : 'horizontal'}…`);
+        const res = await fetch(`${this.baseUrl()}/flip?id=${this.camId}&${axis}=${current ? 0 : 1}&_=${Date.now()}`, { cache:'no-store' });
+        if(!res.ok) throw new Error(`Server returned ${res.status} (camera may be offline)`);
+        const data = await res.json();
+        this.flipV = !!data.v;
+        this.flipH = !!data.h;
+        this.renderToggles();
+        this.log(`${axis === 'v' ? 'Vertical flip' : 'Horizontal mirror'} ${(axis === 'v' ? this.flipV : this.flipH) ? 'on' : 'off'}.`, 'ok');
+      }catch(err){
+        this.log(`Could not flip the camera — ${err.message}`, 'err');
+      }finally{
+        this.toggleV.style.pointerEvents = '';
+        this.toggleH.style.pointerEvents = '';
+      }
+    }
+
+    bindEvents(){
+      this.btnStream.addEventListener('click', () => {
+        if(this.streaming){
+          this.stopStream();
+          this.log('Feed stopped.');
+        } else {
+          this.streamFailCount = 0;
+          this.streamRetryDelay = 2000;
+          this.startStream();
+        }
+      });
+      this.btnShutter.addEventListener('click', () => this.takePhoto());
+      this.toggleV.addEventListener('click', () => this.flipAxis('v'));
+      this.toggleH.addEventListener('click', () => this.flipAxis('h'));
     }
   }
 
-  toggleV.addEventListener('click', () => flipAxis('v'));
-  toggleH.addEventListener('click', () => flipAxis('h'));
-
-  // ================= boot =================
-  relayHost.textContent = location.host;
-  topbarIp.textContent = location.host;
-  renderToggles();
-  logEvent('Console loaded.');
-  startStream();
-  pollStatus();
+  // ============================================================
+  // BOOT: instantiate both cameras
+  // ============================================================
+  document.querySelectorAll('.camera-unit').forEach(el => {
+    new CameraUI(el.dataset.cam, el);
+  });
 </script>
 </body>
 </html>
